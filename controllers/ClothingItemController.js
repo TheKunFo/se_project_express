@@ -1,0 +1,132 @@
+const ClothingItem = require("../models/ClothingItemModel");
+const mongoose = require('mongoose');
+const {
+  OK,
+  CREATED,
+  BAD_REQUEST,
+  UNAUTHORIZED,
+  NOT_FOUND,
+  INTERNAL_SERVER_ERROR,
+} = require('../utils/errors');
+const getAllItem = (req, res) => {
+  ClothingItem.find({})
+    .then((items) => {
+      res.status(OK).json(items);
+    })
+    .catch((err) => {
+      res.status(INTERNAL_SERVER_ERROR).json({
+        message: 'Failed to load clothing data',
+      });
+    });
+}
+const getFindIdItem = (req, res) => {
+
+  const { itemId } = req.params;
+  ClothingItem.findById(itemId)
+    .orFail(() => {
+      const error = new Error('Dara clothing not found');
+      error.statusCode = NOT_FOUND;
+      throw error;
+    })
+    .then((item) => {
+      res.status(OK).json(item);
+    }).catch((err) => {
+      res.status(err.statusCode || NOT_FOUND).json({
+        message: err.message
+      })
+    })
+}
+const createItem = (req, res) => {
+  if (!req.user || !req.user._id) {
+    return res.status(UNAUTHORIZED).json({ message: 'Unauthorized: User not authenticated' });
+  }
+  const { name, weather, imageUrl } = req.body;
+  if (!name || !weather || !imageUrl) {
+    return res.status(NOT_FOUND).json({
+      'message': 'Name and avatar are required'
+    })
+  }
+
+  ClothingItem.create({ name, weather, imageUrl, owner: req.user._id }).then((item) => {
+    res.status(CREATED).json({
+      'message': 'Successfully create data Clothing',
+      'data': item,
+    });
+  }).catch((err) => {
+    res.status(INTERNAL_SERVER_ERROR).json({
+      message: 'Failed to create Clothing',
+      error: err.message
+    })
+  });
+}
+const deleteItem = (req, res) => {
+  const { itemId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(itemId)) {
+    return res.status(BAD_REQUEST).json({ message: 'ID not valid' });
+  }
+
+  ClothingItem.findByIdAndDelete(itemId)
+    .orFail(() => {
+      const error = new Error('Dara clothing not found');
+      error.statusCode = NOT_FOUND;
+      throw error;
+    })
+    .then((item) => {
+      res.status(CREATED).json({
+        'message': 'Successfully delete item',
+        'data': item
+      }).catch((error) => {
+        res.status(err.statusCode || INTERNAL_SERVER_ERROR).json({
+          message: err.message
+        })
+      })
+    })
+
+}
+
+const likeItem = (req, res) => {
+  ClothingItem.findByIdAndUpdate(
+    req.params.itemId,
+    { $addToSet: { likes: req.user._id } },
+    { new: true }
+  )
+    .orFail(() => {
+      const error = new Error('Item not found');
+      error.statusCode = NOT_FOUND;
+      throw error;
+    })
+    .then((item) => res.status(200).json({ message: 'Item liked', data: item }))
+    .catch((err) => {
+      console.error(err);
+      res.status(err.statusCode || SERVER_ERROR).json({ message: err.message });
+    });
+};
+
+
+const dislikeItem = (req, res) => {
+  ClothingItem.findByIdAndUpdate(
+    req.params.itemId,
+    { $pull: { likes: req.user._id } },
+    { new: true }
+  )
+    .orFail(() => {
+      const error = new Error('Item not found');
+      error.statusCode = NOT_FOUND;
+      throw error;
+    })
+    .then((item) => res.status(200).json({ message: 'Item disliked', data: item }))
+    .catch((err) => {
+      console.error(err);
+      res.status(err.statusCode || SERVER_ERROR).json({ message: err.message });
+    });
+};
+
+module.exports = {
+  getAllItem,
+  getFindIdItem,
+  createItem,
+  deleteItem,
+  likeItem,
+  dislikeItem,
+}
