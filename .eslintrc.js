@@ -1,12 +1,8 @@
-const _id ="";
-
 module.exports = {
   env: {
     es2021: true,
     node: true,
   },
-
-  // Add the necessary extensions.
   extends: ["eslint:recommended", "airbnb-base", "prettier"],
   overrides: [
     {
@@ -23,5 +19,7 @@ module.exports = {
     ecmaVersion: "latest",
     sourceType: "module",
   },
-  rules: {"no-console": ["warn", { allow:["error"]}],
+  rules: {
+    "no-underscore-dangle": ["error", { allow: ["_id"] }],
+  },
 };
