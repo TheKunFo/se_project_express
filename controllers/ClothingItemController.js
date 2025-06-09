@@ -1,5 +1,5 @@
-const ClothingItem = require("../models/ClothingItemModel");
 const mongoose = require('mongoose');
+const ClothingItem = require("../models/ClothingItemModel");
 const {
   OK,
   CREATED,
@@ -8,12 +8,13 @@ const {
   NOT_FOUND,
   INTERNAL_SERVER_ERROR,
 } = require('../utils/errors');
+
 const getAllItem = (req, res) => {
   ClothingItem.find({})
     .then((items) => {
       res.status(OK).json(items);
     })
-    .catch((err) => {
+    .catch(() => {
       res.status(INTERNAL_SERVER_ERROR).json({
         message: 'Failed to load clothing data',
       });
@@ -31,8 +32,13 @@ const getFindIdItem = (req, res) => {
     .then((item) => {
       res.status(OK).json(item);
     }).catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(BAD_REQUEST).json({ message: 'Invalid ID format' });
+        return;
+      }
       res.status(err.statusCode || NOT_FOUND).json({
-        message: err.message
+        message: err.message,
+        name: err.name,
       })
     })
 }
@@ -42,23 +48,30 @@ const createItem = (req, res) => {
   }
   const { name, weather, imageUrl } = req.body;
   if (!name || !weather || !imageUrl) {
-    return res.status(NOT_FOUND).json({
-      'message': 'Name and avatar are required'
+    return res.status(BAD_REQUEST).json({
+      'message': 'Name ,weather and image are required'
     })
   }
 
-  ClothingItem.create({ name, weather, imageUrl, owner: req.user._id }).then((item) => {
-    res.status(CREATED).json({
-      'message': 'Successfully create data Clothing',
-      'data': item,
-    });
-  }).catch((err) => {
-    res.status(INTERNAL_SERVER_ERROR).json({
-      message: 'Failed to create Clothing',
-      error: err.message
-    })
-  });
+  return ClothingItem.create({ name, weather, imageUrl, owner: req.user._id })
+    .then(item =>
+      res.status(CREATED).json({
+        'message': 'Successfully create data Clothing',
+        'data': item,
+      })).catch((err) => {
+        if (err.name === 'ValidationError') {
+          const messages = Object.values(err.errors).map(e => e.message);
+          return res.status(BAD_REQUEST).json({ message: 'Input data not valid', details: messages });
+
+        }
+
+        return res.status(INTERNAL_SERVER_ERROR).json({
+          message: 'Failed to create Clothing',
+          error: err.message
+        })
+      });
 }
+
 const deleteItem = (req, res) => {
   const { itemId } = req.params;
 
@@ -66,22 +79,21 @@ const deleteItem = (req, res) => {
     return res.status(BAD_REQUEST).json({ message: 'ID not valid' });
   }
 
-  ClothingItem.findByIdAndDelete(itemId)
+  return ClothingItem.findByIdAndDelete(itemId)
     .orFail(() => {
       const error = new Error('Dara clothing not found');
       error.statusCode = NOT_FOUND;
       throw error;
     })
-    .then((item) => {
+    .then(item =>
       res.status(CREATED).json({
         'message': 'Successfully delete item',
         'data': item
-      }).catch((error) => {
-        res.status(err.statusCode || INTERNAL_SERVER_ERROR).json({
-          message: err.message
-        })
       })
-    })
+    ).catch(err =>
+      res.status(err.statusCode || INTERNAL_SERVER_ERROR).json({
+        message: err.message
+      }))
 
 }
 
@@ -98,8 +110,11 @@ const likeItem = (req, res) => {
     })
     .then((item) => res.status(200).json({ message: 'Item liked', data: item }))
     .catch((err) => {
-      console.error(err);
-      res.status(err.statusCode || SERVER_ERROR).json({ message: err.message });
+      if (err.name === 'CastError') {
+        res.status(BAD_REQUEST).json({ message: 'Invalid ID format' });
+        return;
+      }
+      res.status(err.statusCode || INTERNAL_SERVER_ERROR).json({ message: err.message });
     });
 };
 
@@ -117,8 +132,11 @@ const dislikeItem = (req, res) => {
     })
     .then((item) => res.status(200).json({ message: 'Item disliked', data: item }))
     .catch((err) => {
-      console.error(err);
-      res.status(err.statusCode || SERVER_ERROR).json({ message: err.message });
+      if (err.name === 'CastError') {
+        res.status(BAD_REQUEST).json({ message: 'Invalid ID format' });
+        return;
+      }
+      res.status(err.statusCode || INTERNAL_SERVER_ERROR).json({ message: err.message });
     });
 };
 

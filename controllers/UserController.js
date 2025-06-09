@@ -3,16 +3,16 @@ const {
   OK,
   CREATED,
   BAD_REQUEST,
-  UNAUTHORIZED,
   NOT_FOUND,
   INTERNAL_SERVER_ERROR,
 } = require('../utils/errors');
+
 const getAllUser = (req, res) => {
   User.find({})
     .then((items) => {
       res.status(OK).json(items);
     })
-    .catch((err) => {
+    .catch(() => {
       res.status(INTERNAL_SERVER_ERROR).json({
         message: 'Failed to load user data',
       });
@@ -30,7 +30,11 @@ const getFindIdUser = (req, res) => {
     .then((item) => {
       res.status(OK).json(item);
     }).catch((err) => {
-      res.status(err.statusCode || BAD_REQUEST).json({
+      if (err.name === 'CastError') {
+        res.status(BAD_REQUEST).json({ message: 'Invalid ID format' });
+        return;
+      }
+      res.status(err.statusCode || INTERNAL_SERVER_ERROR).json({
         message: err.message
       })
     })
@@ -45,13 +49,18 @@ const createUser = (req, res) => {
     })
   }
 
-  User.create({ name, avatar }).then((user) => {
+  return User.create({ name, avatar }).then(user =>
     res.status(CREATED).json({
       'message': 'Successfully create data user',
       'data': user,
-    });
-  }).catch((err) => {
-    res.status(INTERNAL_SERVER_ERROR).json({
+    })).catch((err) => {
+    if (err.name === 'ValidationError') {
+      const messages = Object.values(err.errors).map(e => e.message);
+      return res.status(BAD_REQUEST).json({ message: 'Input data not valid', details: messages });
+
+    }
+
+    return res.status(INTERNAL_SERVER_ERROR).json({
       message: 'Failed to create user',
       error: err.message
     })
