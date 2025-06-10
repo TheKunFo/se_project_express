@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const ClothingItem = require("../models/ClothingItemModel");
 const {
   OK,
@@ -7,7 +7,7 @@ const {
   UNAUTHORIZED,
   NOT_FOUND,
   INTERNAL_SERVER_ERROR,
-} = require('../utils/errors');
+} = require("../utils/errors");
 
 const getAllItem = (req, res) => {
   ClothingItem.find({})
@@ -16,86 +16,91 @@ const getAllItem = (req, res) => {
     })
     .catch(() => {
       res.status(INTERNAL_SERVER_ERROR).json({
-        message: 'Failed to load clothing data',
+        message: "Failed to load clothing data",
       });
     });
-}
+};
 const getFindIdItem = (req, res) => {
-
   const { itemId } = req.params;
   ClothingItem.findById(itemId)
     .orFail(() => {
-      const error = new Error('Dara clothing not found');
+      const error = new Error("Dara clothing not found");
       error.statusCode = NOT_FOUND;
       throw error;
     })
     .then((item) => {
       res.status(OK).json(item);
-    }).catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(BAD_REQUEST).json({ message: 'Invalid ID format' });
+    })
+    .catch((err) => {
+      if (err.name === "CastError") {
+        res.status(BAD_REQUEST).json({ message: "Invalid ID format" });
         return;
       }
-      res.status(err.statusCode || NOT_FOUND).json({
+      res.status(err.statusCode || INTERNAL_SERVER_ERROR).json({
         message: err.message,
         name: err.name,
-      })
-    })
-}
+      });
+    });
+};
 const createItem = (req, res) => {
   if (!req.user || !req.user._id) {
-    return res.status(UNAUTHORIZED).json({ message: 'Unauthorized: User not authenticated' });
+    return res
+      .status(UNAUTHORIZED)
+      .json({ message: "Unauthorized: User not authenticated" });
   }
   const { name, weather, imageUrl } = req.body;
   if (!name || !weather || !imageUrl) {
     return res.status(BAD_REQUEST).json({
-      'message': 'Name ,weather and image are required'
-    })
+      message: "Name ,weather and image are required",
+    });
   }
 
   return ClothingItem.create({ name, weather, imageUrl, owner: req.user._id })
-    .then(item =>
+    .then((item) =>
       res.status(CREATED).json({
-        'message': 'Successfully create data Clothing',
-        'data': item,
-      })).catch((err) => {
-        if (err.name === 'ValidationError') {
-          const messages = Object.values(err.errors).map(e => e.message);
-          return res.status(BAD_REQUEST).json({ message: 'Input data not valid', details: messages });
+        data: item,
+      })
+    )
+    .catch((err) => {
+      if (err.name === "ValidationError") {
+        const messages = Object.values(err.errors).map((e) => e.message);
+        return res
+          .status(BAD_REQUEST)
+          .json({ message: "Input data not valid", details: messages });
+      }
 
-        }
-
-        return res.status(INTERNAL_SERVER_ERROR).json({
-          message: 'Failed to create Clothing',
-          error: err.message
-        })
+      return res.status(INTERNAL_SERVER_ERROR).json({
+        message: "Failed to create Clothing",
+        error: err.message,
       });
-}
+    });
+};
 
 const deleteItem = (req, res) => {
   const { itemId } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(itemId)) {
-    return res.status(BAD_REQUEST).json({ message: 'ID not valid' });
+    return res.status(BAD_REQUEST).json({ message: "ID not valid" });
   }
 
   return ClothingItem.findByIdAndDelete(itemId)
     .orFail(() => {
-      const error = new Error('Dara clothing not found');
+      const error = new Error("Dara clothing not found");
       error.statusCode = NOT_FOUND;
       throw error;
     })
-    .then(item =>
-      res.status(CREATED).json({
-        'message': 'Successfully delete item',
-        'data': item
+    .then((item) =>
+      res.status(OK).json({
+        message: "Successfully delete item",
+        data: item,
       })
-    ).catch(err =>
+    )
+    .catch((err) =>
       res.status(err.statusCode || INTERNAL_SERVER_ERROR).json({
-        message: err.message
-      }))
-
-}
+        message: err.message,
+      })
+    );
+};
 
 const likeItem = (req, res) => {
   ClothingItem.findByIdAndUpdate(
@@ -104,20 +109,21 @@ const likeItem = (req, res) => {
     { new: true }
   )
     .orFail(() => {
-      const error = new Error('Item not found');
+      const error = new Error("Item not found");
       error.statusCode = NOT_FOUND;
       throw error;
     })
-    .then((item) => res.status(200).json({ message: 'Item liked', data: item }))
+    .then((item) => res.status(200).json({ message: "Item liked", data: item }))
     .catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(BAD_REQUEST).json({ message: 'Invalid ID format' });
+      if (err.name === "CastError") {
+        res.status(BAD_REQUEST).json({ message: "Invalid ID format" });
         return;
       }
-      res.status(err.statusCode || INTERNAL_SERVER_ERROR).json({ message: err.message });
+      res
+        .status(err.statusCode || INTERNAL_SERVER_ERROR)
+        .json({ message: err.message });
     });
 };
-
 
 const dislikeItem = (req, res) => {
   ClothingItem.findByIdAndUpdate(
@@ -126,17 +132,21 @@ const dislikeItem = (req, res) => {
     { new: true }
   )
     .orFail(() => {
-      const error = new Error('Item not found');
+      const error = new Error("Item not found");
       error.statusCode = NOT_FOUND;
       throw error;
     })
-    .then((item) => res.status(200).json({ message: 'Item disliked', data: item }))
+    .then((item) =>
+      res.status(200).json({ message: "Item disliked", data: item })
+    )
     .catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(BAD_REQUEST).json({ message: 'Invalid ID format' });
+      if (err.name === "CastError") {
+        res.status(BAD_REQUEST).json({ message: "Invalid ID format" });
         return;
       }
-      res.status(err.statusCode || INTERNAL_SERVER_ERROR).json({ message: err.message });
+      res
+        .status(err.statusCode || INTERNAL_SERVER_ERROR)
+        .json({ message: err.message });
     });
 };
 
@@ -147,4 +157,4 @@ module.exports = {
   deleteItem,
   likeItem,
   dislikeItem,
-}
+};

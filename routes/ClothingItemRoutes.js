@@ -7,6 +7,7 @@ const {
   likeItem,
   dislikeItem,
 } = require('../controllers/ClothingItemController');
+
 const clothingItemModelRoutes = express.Router();
 
 clothingItemModelRoutes.get('/',getAllItem);
