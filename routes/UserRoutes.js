@@ -2,19 +2,16 @@ const express = require('express');
 
 const userRoutes = express.Router();
 const {
-  getCurrentUser,
-  updateUserProfile,
+  getAllUser,
+  getFindIdUser,
+  createUser,
 } = require('../controllers/UserController');
 
 
-// userRoutes.get('/', getAllUser);
+userRoutes.get('/', getAllUser);
 
-// userRoutes.get('/:userId',getFindIdUser)
+userRoutes.get('/:userId',getFindIdUser)
 
-// userRoutes.post('/', createUser)
-
-// userRoutes.post('/login',login)
-userRoutes.get('/me', getCurrentUser);
-userRoutes.patch('/me', updateUserProfile);
+userRoutes.post('/', createUser)
 
 module.exports = userRoutes;
