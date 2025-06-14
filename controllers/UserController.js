@@ -1,6 +1,6 @@
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const { JWT_SECRET } = require("../utils/config");
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../utils/config');
 const User = require("../models/UserModel");
 const {
   OK,
@@ -55,6 +55,10 @@ const createUser = async (req, res) => {
       message: "Name, avatar, email and password are required",
     });
   }
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    return res.status(CONFLICT).json({ message: 'Email already exists' });
+  }
   const hashedPassword = await bcrypt.hash(password, 10);
   try {
     const user = await User.create({
@@ -90,6 +94,7 @@ const createUser = async (req, res) => {
       error: err.message,
     });
   }
+
 };
 
 const login = (req, res) => {
@@ -97,23 +102,21 @@ const login = (req, res) => {
 
   if (!email || !password) {
     return res.status(BAD_REQUEST).json({
-      message: "Email and password are required",
+      message: 'Email and password are required',
     });
   }
 
-  return User.findUserByCredentials(email, password)
-    .then((user) => {
-      const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
-        expiresIn: "7d",
-      });
+  return User.findUserByCredentials(email, password).then((user) => {
+    const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
+      expiresIn: '7d',
+    });
 
-      return res.send({ token });
+    return res.send({ token });
+  }).catch(() =>
+    res.status(UNAUTHORIZED).json({
+      message: 'Invalid email or password',
     })
-    .catch(() =>
-      res.status(UNAUTHORIZED).json({
-        message: "Invalid email or password",
-      })
-    );
+  );
 };
 
 const getCurrentUser = (req, res) => {
@@ -122,14 +125,12 @@ const getCurrentUser = (req, res) => {
   User.findById(userId)
     .then((user) => {
       if (!user) {
-        return res.status(NOT_FOUND).json({ message: "User not found" });
+        return res.status(NOT_FOUND).json({ message: 'User not found' });
       }
       return res.json({ data: user });
     })
     .catch((err) =>
-      res
-        .status(INTERNAL_SERVER_ERROR)
-        .json({ message: "Server error", error: err.message })
+      res.status(INTERNAL_SERVER_ERROR).json({ message: 'Server error', error: err.message })
     );
 };
 
@@ -147,25 +148,25 @@ const updateUserProfile = (req, res) => {
   )
     .then((updatedUser) => {
       if (!updatedUser) {
-        return res.status(NOT_FOUND).json({ message: "User not found" });
+        return res.status(NOT_FOUND).json({ message: 'User not found' });
       }
 
       return res.json({
-        message: "Data telah diperbarui",
-        data: updatedUser,
+
+        data: updatedUser
       });
     })
     .catch((err) => {
-      if (err.name === "ValidationError") {
+      if (err.name === 'ValidationError') {
         const errors = Object.values(err.errors).map((e) => e.message);
         return res.status(BAD_REQUEST).json({
-          message: "Invalid data",
+          message: 'Invalid data',
           details: errors,
         });
       }
 
       return res.status(INTERNAL_SERVER_ERROR).json({
-        message: "Failed to update user profile",
+        message: 'Failed to update user profile',
         error: err.message,
       });
     });
