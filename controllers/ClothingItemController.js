@@ -6,6 +6,7 @@ const {
   BAD_REQUEST,
   UNAUTHORIZED,
   FORBIDDEN,
+  FORBIDDEN,
   NOT_FOUND,
   INTERNAL_SERVER_ERROR,
 } = require("../utils/errors");
@@ -79,6 +80,7 @@ const createItem = (req, res) => {
 
 const deleteItem = (req, res) => {
   const { itemId } = req.params;
+  const userId = req.user._id;
   const userId = req.user._id;
 
   if (!mongoose.Types.ObjectId.isValid(itemId)) {
