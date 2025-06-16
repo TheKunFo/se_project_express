@@ -5,6 +5,7 @@ const {
   CREATED,
   BAD_REQUEST,
   UNAUTHORIZED,
+  FORBIDDEN,
   NOT_FOUND,
   INTERNAL_SERVER_ERROR,
 } = require("../utils/errors");
@@ -78,28 +79,39 @@ const createItem = (req, res) => {
 
 const deleteItem = (req, res) => {
   const { itemId } = req.params;
+  const userId = req.user._id;
 
   if (!mongoose.Types.ObjectId.isValid(itemId)) {
     return res.status(BAD_REQUEST).json({ message: "ID not valid" });
   }
-
-  return ClothingItem.findByIdAndDelete(itemId)
-    .orFail(() => {
-      const error = new Error("Dara clothing not found");
-      error.statusCode = NOT_FOUND;
-      throw error;
+  ClothingItem.findById(itemId)
+    .orFail()
+    .then((item) => {
+      if (String(item.owner) !== req.user._id) {
+        return res
+          .status(ERROR_CODES.FORBIDDEN)
+          .send({ message: ERROR_MESSAGES_FORBIDDEN });
+      }
+      return item
+        .deleteOne()
+        .then(() => res.status(200).send({ message: "Successfully deleted" }));
     })
-    .then((item) =>
-      res.status(OK).json({
-        message: "Successfully delete item",
-        data: item,
-      })
-    )
-    .catch((err) =>
-      res.status(err.statusCode || INTERNAL_SERVER_ERROR).json({
-        message: err.message,
-      })
-    );
+    .catch((err) => {
+      console.error(err);
+      if (err.name === "DocumentNotFoundError") {
+        return res
+          .status(ERROR_CODES.NOT_FOUND)
+          .send({ message: ERROR_MESSAGES.NOT_FOUND });
+      }
+      if (err.name === "CastError") {
+        return res
+          .status(ERROR_CODES.BAD_REQUEST)
+          .send({ message: ERROR_MESSAGES.BAD_REQUEST });
+      }
+      return res
+        .status(ERROR_CODES.SERVER_ERROR)
+        .send({ message: ERROR_MESSAGES.SERVER_ERROR });
+    });
 };
 
 const likeItem = (req, res) => {
