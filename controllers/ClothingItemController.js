@@ -6,7 +6,6 @@ const {
   BAD_REQUEST,
   UNAUTHORIZED,
   FORBIDDEN,
-  FORBIDDEN,
   NOT_FOUND,
   INTERNAL_SERVER_ERROR,
 } = require("../utils/errors");
@@ -24,6 +23,7 @@ const getAllItem = (req, res) => {
 };
 const getFindIdItem = (req, res) => {
   const { itemId } = req.params;
+
   ClothingItem.findById(itemId)
     .orFail(() => {
       const error = new Error("Dara clothing not found");
@@ -81,7 +81,6 @@ const createItem = (req, res) => {
 const deleteItem = (req, res) => {
   const { itemId } = req.params;
   const userId = req.user._id;
-  const userId = req.user._id;
 
   if (!mongoose.Types.ObjectId.isValid(itemId)) {
     return res.status(BAD_REQUEST).json({ message: "ID not valid" });
@@ -115,31 +114,6 @@ const deleteItem = (req, res) => {
         .send({ message: ERROR_MESSAGES.SERVER_ERROR });
     });
 };
-//   return ClothingItem.findByIdAndDelete(itemId)
-//     .orFail(() => {
-//       const error = new Error("Dara clothing not found");
-//       error.statusCode = NOT_FOUND;
-//       throw error;
-//     })
-//     .then((item) => {
-//       if (item.owner.toString() !== userId) {
-//         const error = new Error("Not allowed to delete this item");
-//         error.statusCode = FORBIDDEN;
-//         throw error;
-//       }
-//       res.status(OK).json({
-//         message: "Successfully delete item",
-//         data: item,
-//       })
-
-//     }
-//     )
-//     .catch((err) =>
-//       res.status(err.statusCode || INTERNAL_SERVER_ERROR).json({
-//         message: err.message,
-//       })
-//     );
-// };
 
 const likeItem = (req, res) => {
   ClothingItem.findByIdAndUpdate(
