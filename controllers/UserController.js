@@ -1,4 +1,4 @@
-const bcrypt = require("bcrypt");
+const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = require("../utils/config");
 const User = require("../models/UserModel");
@@ -23,7 +23,7 @@ const createUser = async (req, res) => {
   if (existingUser) {
     return res.status(CONFLICT).json({ message: "Email already exists" });
   }
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcryptjs.hash(password, 10);
   try {
     const user = await User.create({
       name,
