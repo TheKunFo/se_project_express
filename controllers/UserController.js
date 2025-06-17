@@ -71,31 +71,18 @@ const login = (req, res) => {
   }
 
   return User.findUserByCredentials(email, password)
-    .then((user) => {
-      const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
-        expiresIn: "7d",
-      });
+.then((user) => {
+  const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
+    expiresIn: "7d",
+  });
 
-      return res.send({ token });
-    })
-    .catch(() =>
-      res.status(UNAUTHORIZED).json({
-        message: "Invalid email or password",
-      })
-    );
-      return res.send({ token });
-    })
-    .catch((err) => {if (err.message === "Incorrect email or password") { 
-   //// send the 401 error
-   return res.status(UNAUTHORIZED).json({
+  return res.send({ token });
+})
+.catch(() =>
+  res.status(UNAUTHORIZED).json({
     message: "Invalid email or password",
-   })
-  }
-   
-    res.status(INTERNAL_SERVER_ERROR).json({
-        message: "FAILED",
-      })
-});
+  })
+);
 };
 
 const getCurrentUser = (req, res) => {
