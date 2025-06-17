@@ -3,7 +3,6 @@ const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = require("../utils/config");
 const User = require("../models/UserModel");
 const {
-  OK,
   CREATED,
   BAD_REQUEST,
   UNAUTHORIZED,
@@ -71,18 +70,18 @@ const login = (req, res) => {
   }
 
   return User.findUserByCredentials(email, password)
-.then((user) => {
-  const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
-    expiresIn: "7d",
-  });
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
+        expiresIn: "7d",
+      });
 
-  return res.send({ token });
-})
-.catch(() =>
-  res.status(UNAUTHORIZED).json({
-    message: "Invalid email or password",
-  })
-);
+      return res.send({ token });
+    })
+    .catch(() =>
+      res.status(UNAUTHORIZED).json({
+        message: "Invalid email or password",
+      })
+    );
 };
 
 const getCurrentUser = (req, res) => {

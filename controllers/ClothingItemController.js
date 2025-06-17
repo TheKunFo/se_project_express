@@ -81,17 +81,14 @@ const createItem = (req, res) => {
 const deleteItem = (req, res) => {
   const { itemId } = req.params;
 
-
   if (!mongoose.Types.ObjectId.isValid(itemId)) {
     return res.status(BAD_REQUEST).json({ message: "ID not valid" });
   }
-  ClothingItem.findById(itemId)
+  return ClothingItem.findById(itemId)
     .orFail()
     .then((item) => {
       if (String(item.owner) !== req.user._id) {
-        return res
-          .status(FORBIDDEN)
-          .send({ message: FORBIDDEN });
+        return res.status(FORBIDDEN).send({ message: FORBIDDEN });
       }
       return item
         .deleteOne()
@@ -100,14 +97,10 @@ const deleteItem = (req, res) => {
     .catch((err) => {
       console.error(err);
       if (err.name === "DocumentNotFoundError") {
-        return res
-          .status(NOT_FOUND)
-          .send({ message: NOT_FOUND });
+        return res.status(NOT_FOUND).send({ message: NOT_FOUND });
       }
       if (err.name === "CastError") {
-        return res
-          .status(BAD_REQUEST)
-          .send({ message: BAD_REQUEST });
+        return res.status(BAD_REQUEST).send({ message: BAD_REQUEST });
       }
       return res
         .status(INTERNAL_SERVER_ERROR)
