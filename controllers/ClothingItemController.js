@@ -23,6 +23,7 @@ const getAllItem = (req, res) => {
 };
 const getFindIdItem = (req, res) => {
   const { itemId } = req.params;
+
   ClothingItem.findById(itemId)
     .orFail(() => {
       const error = new Error("Dara clothing not found");

@@ -78,6 +78,13 @@ const login = (req, res) => {
 
       return res.send({ token });
     })
+    .catch(() =>
+      res.status(UNAUTHORIZED).json({
+        message: "Invalid email or password",
+      })
+    );
+      return res.send({ token });
+    })
     .catch((err) => {if (err.message === "Incorrect email or password") { 
    //// send the 401 error
    return res.status(UNAUTHORIZED).json({
