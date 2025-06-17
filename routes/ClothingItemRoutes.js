@@ -7,7 +7,7 @@ const {
   likeItem,
   dislikeItem,
 } = require('../controllers/ClothingItemController');
-const auth = require('./middlewares/auth');
+const auth = require ('../middlewares/auth');
 
 const clothingItemModelRoutes = express.Router();
 

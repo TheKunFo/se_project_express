@@ -6,7 +6,6 @@ const {
   BAD_REQUEST,
   UNAUTHORIZED,
   FORBIDDEN,
-  FORBIDDEN,
   NOT_FOUND,
   INTERNAL_SERVER_ERROR,
 } = require("../utils/errors");
@@ -81,7 +80,6 @@ const createItem = (req, res) => {
 const deleteItem = (req, res) => {
   const { itemId } = req.params;
   const userId = req.user._id;
-  const userId = req.user._id;
 
   if (!mongoose.Types.ObjectId.isValid(itemId)) {
     return res.status(BAD_REQUEST).json({ message: "ID not valid" });
@@ -91,7 +89,7 @@ const deleteItem = (req, res) => {
     .then((item) => {
       if (String(item.owner) !== req.user._id) {
         return res
-          .status(ERROR_CODES.FORBIDDEN)
+          .status(FORBIDDEN)
           .send({ message: ERROR_MESSAGES_FORBIDDEN });
       }
       return item
@@ -102,17 +100,17 @@ const deleteItem = (req, res) => {
       console.error(err);
       if (err.name === "DocumentNotFoundError") {
         return res
-          .status(ERROR_CODES.NOT_FOUND)
-          .send({ message: ERROR_MESSAGES.NOT_FOUND });
+          .status(NOT_FOUND)
+          .send({ message: NOT_FOUND });
       }
       if (err.name === "CastError") {
         return res
-          .status(ERROR_CODES.BAD_REQUEST)
-          .send({ message: ERROR_MESSAGES.BAD_REQUEST });
+          .status(BAD_REQUEST)
+          .send({ message: BAD_REQUEST });
       }
       return res
-        .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: ERROR_MESSAGES.SERVER_ERROR });
+        .status(SERVER_ERROR)
+        .send({ message: SERVER_ERROR });
     });
 };
 

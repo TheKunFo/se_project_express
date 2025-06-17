@@ -17,9 +17,11 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(cors());
 
+
 app.use('/',router);
-app.use(auth);
 app.use('/items',clothingItemModelRoutes);
+app.use(auth);
+
 app.use('/users',userRoutes);
 app.use((req, res) => {
   res.status(NOT_FOUND).json({ message: 'Requested resource not found' });
