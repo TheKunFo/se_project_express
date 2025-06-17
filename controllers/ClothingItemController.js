@@ -88,7 +88,9 @@ const deleteItem = (req, res) => {
     .orFail()
     .then((item) => {
       if (String(item.owner) !== req.user._id) {
-        return res.status(FORBIDDEN).send({ message: FORBIDDEN });
+        return res
+          .status(FORBIDDEN)
+          .send({ message: "Forbidden Error , the item cannot be deleted" });
       }
       return item
         .deleteOne()
@@ -97,14 +99,23 @@ const deleteItem = (req, res) => {
     .catch((err) => {
       console.error(err);
       if (err.name === "DocumentNotFoundError") {
-        return res.status(NOT_FOUND).send({ message: NOT_FOUND });
+        return res
+          .status(NOT_FOUND)
+          .send({
+            message:
+              "The requested resource could not be found on this server.",
+          });
       }
       if (err.name === "CastError") {
-        return res.status(BAD_REQUEST).send({ message: BAD_REQUEST });
+        return res.status(BAD_REQUEST).send({
+          message:
+            "The request could not be understood by the server due to malformed syntax or missing required parameters.",
+        });
       }
-      return res
-        .status(INTERNAL_SERVER_ERROR)
-        .send({ message: INTERNAL_SERVER_ERROR });
+      return res.status(INTERNAL_SERVER_ERROR).send({
+        message:
+          "The server encountered an unexpected condition that prevented it from fulfilling the request.",
+      });
     });
 };
 
