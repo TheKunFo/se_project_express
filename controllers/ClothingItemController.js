@@ -80,7 +80,7 @@ const createItem = (req, res) => {
 
 const deleteItem = (req, res) => {
   const { itemId } = req.params;
-  const userId = req.user._id;
+
 
   if (!mongoose.Types.ObjectId.isValid(itemId)) {
     return res.status(BAD_REQUEST).json({ message: "ID not valid" });
@@ -91,7 +91,7 @@ const deleteItem = (req, res) => {
       if (String(item.owner) !== req.user._id) {
         return res
           .status(FORBIDDEN)
-          .send({ message: ERROR_MESSAGES_FORBIDDEN });
+          .send({ message: FORBIDDEN });
       }
       return item
         .deleteOne()
@@ -110,8 +110,8 @@ const deleteItem = (req, res) => {
           .send({ message: BAD_REQUEST });
       }
       return res
-        .status(SERVER_ERROR)
-        .send({ message: SERVER_ERROR });
+        .status(INTERNAL_SERVER_ERROR)
+        .send({ message: INTERNAL_SERVER_ERROR });
     });
 };
 
