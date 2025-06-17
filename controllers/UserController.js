@@ -1,6 +1,6 @@
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = require('../utils/config');
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const { JWT_SECRET } = require("../utils/config");
 const User = require("../models/UserModel");
 const {
   OK,
@@ -12,40 +12,40 @@ const {
   INTERNAL_SERVER_ERROR,
 } = require("../utils/errors");
 
-const getAllUser = (req, res) => {
-  User.find({})
-    .then((items) => {
-      res.status(OK).json(items);
-    })
-    .catch(() => {
-      res.status(INTERNAL_SERVER_ERROR).json({
-        message: "Failed to load user data",
-      });
-    });
-};
+// const getAllUser = (req, res) => {
+//   User.find({})
+//     .then((items) => {
+//       res.status(OK).json(items);
+//     })
+//     .catch(() => {
+//       res.status(INTERNAL_SERVER_ERROR).json({
+//         message: "Failed to load user data",
+//       });
+//     });
+// };
 
-const getFindIdUser = (req, res) => {
-  const { userId } = req.params;
+// const getFindIdUser = (req, res) => {
+//   const { userId } = req.params;
 
-  User.findById(userId)
-    .orFail(() => {
-      const error = new Error("Data user not found");
-      error.statusCode = NOT_FOUND;
-      throw error;
-    })
-    .then((item) => {
-      res.status(OK).json(item);
-    })
-    .catch((err) => {
-      if (err.name === "CastError") {
-        res.status(BAD_REQUEST).json({ message: "Invalid ID format" });
-        return;
-      }
-      res.status(err.statusCode || INTERNAL_SERVER_ERROR).json({
-        message: err.message,
-      });
-    });
-};
+//   User.findById(userId)
+//     .orFail(() => {
+//       const error = new Error("Data user not found");
+//       error.statusCode = NOT_FOUND;
+//       throw error;
+//     })
+//     .then((item) => {
+//       res.status(OK).json(item);
+//     })
+//     .catch((err) => {
+//       if (err.name === "CastError") {
+//         res.status(BAD_REQUEST).json({ message: "Invalid ID format" });
+//         return;
+//       }
+//       res.status(err.statusCode || INTERNAL_SERVER_ERROR).json({
+//         message: err.message,
+//       });
+//     });
+// };
 
 const createUser = async (req, res) => {
   const { name, email, password, avatar } = req.body;
@@ -57,7 +57,7 @@ const createUser = async (req, res) => {
   }
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    return res.status(CONFLICT).json({ message: 'Email already exists' });
+    return res.status(CONFLICT).json({ message: "Email already exists" });
   }
   const hashedPassword = await bcrypt.hash(password, 10);
   try {
@@ -94,7 +94,6 @@ const createUser = async (req, res) => {
       error: err.message,
     });
   }
-
 };
 
 const login = (req, res) => {
@@ -102,21 +101,23 @@ const login = (req, res) => {
 
   if (!email || !password) {
     return res.status(BAD_REQUEST).json({
-      message: 'Email and password are required',
+      message: "Email and password are required",
     });
   }
 
-  return User.findUserByCredentials(email, password).then((user) => {
-    const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
-      expiresIn: '7d',
-    });
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
+        expiresIn: "7d",
+      });
 
-    return res.send({ token });
-  }).catch(() =>
-    res.status(UNAUTHORIZED).json({
-      message: 'Invalid email or password',
+      return res.send({ token });
     })
-  );
+    .catch(() =>
+      res.status(UNAUTHORIZED).json({
+        message: "Invalid email or password",
+      })
+    );
 };
 
 const getCurrentUser = (req, res) => {
@@ -125,12 +126,14 @@ const getCurrentUser = (req, res) => {
   User.findById(userId)
     .then((user) => {
       if (!user) {
-        return res.status(NOT_FOUND).json({ message: 'User not found' });
+        return res.status(NOT_FOUND).json({ message: "User not found" });
       }
       return res.json({ data: user });
     })
     .catch((err) =>
-      res.status(INTERNAL_SERVER_ERROR).json({ message: 'Server error', error: err.message })
+      res
+        .status(INTERNAL_SERVER_ERROR)
+        .json({ message: "Server error", error: err.message })
     );
 };
 
@@ -148,25 +151,24 @@ const updateUserProfile = (req, res) => {
   )
     .then((updatedUser) => {
       if (!updatedUser) {
-        return res.status(NOT_FOUND).json({ message: 'User not found' });
+        return res.status(NOT_FOUND).json({ message: "User not found" });
       }
 
       return res.json({
-
-        data: updatedUser
+        data: updatedUser,
       });
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.name === "ValidationError") {
         const errors = Object.values(err.errors).map((e) => e.message);
         return res.status(BAD_REQUEST).json({
-          message: 'Invalid data',
+          message: "Invalid data",
           details: errors,
         });
       }
 
       return res.status(INTERNAL_SERVER_ERROR).json({
-        message: 'Failed to update user profile',
+        message: "Failed to update user profile",
         error: err.message,
       });
     });

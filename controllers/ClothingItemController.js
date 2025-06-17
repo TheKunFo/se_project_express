@@ -84,32 +84,60 @@ const deleteItem = (req, res) => {
   if (!mongoose.Types.ObjectId.isValid(itemId)) {
     return res.status(BAD_REQUEST).json({ message: "ID not valid" });
   }
-
-  return ClothingItem.findByIdAndDelete(itemId)
-    .orFail(() => {
-      const error = new Error("Dara clothing not found");
-      error.statusCode = NOT_FOUND;
-      throw error;
-    })
+  ClothingItem.findById(itemId)
+    .orFail()
     .then((item) => {
-      if (item.owner.toString() !== userId) {
-        const error = new Error("Not allowed to delete this item");
-        error.statusCode = FORBIDDEN;
-        throw error;
+      if (String(item.owner) !== req.user._id) {
+        return res
+          .status(ERROR_CODES.FORBIDDEN)
+          .send({ message: ERROR_MESSAGES_FORBIDDEN });
       }
-      res.status(OK).json({
-        message: "Successfully delete item",
-        data: item,
-      })
-
-    }
-    )
-    .catch((err) =>
-      res.status(err.statusCode || INTERNAL_SERVER_ERROR).json({
-        message: err.message,
-      })
-    );
+      return item
+        .deleteOne()
+        .then(() => res.status(200).send({ message: "Successfully deleted" }));
+    })
+    .catch((err) => {
+      console.error(err);
+      if (err.name === "DocumentNotFoundError") {
+        return res
+          .status(ERROR_CODES.NOT_FOUND)
+          .send({ message: ERROR_MESSAGES.NOT_FOUND });
+      }
+      if (err.name === "CastError") {
+        return res
+          .status(ERROR_CODES.BAD_REQUEST)
+          .send({ message: ERROR_MESSAGES.BAD_REQUEST });
+      }
+      return res
+        .status(ERROR_CODES.SERVER_ERROR)
+        .send({ message: ERROR_MESSAGES.SERVER_ERROR });
+    });
 };
+//   return ClothingItem.findByIdAndDelete(itemId)
+//     .orFail(() => {
+//       const error = new Error("Dara clothing not found");
+//       error.statusCode = NOT_FOUND;
+//       throw error;
+//     })
+//     .then((item) => {
+//       if (item.owner.toString() !== userId) {
+//         const error = new Error("Not allowed to delete this item");
+//         error.statusCode = FORBIDDEN;
+//         throw error;
+//       }
+//       res.status(OK).json({
+//         message: "Successfully delete item",
+//         data: item,
+//       })
+
+//     }
+//     )
+//     .catch((err) =>
+//       res.status(err.statusCode || INTERNAL_SERVER_ERROR).json({
+//         message: err.message,
+//       })
+//     );
+// };
 
 const likeItem = (req, res) => {
   ClothingItem.findByIdAndUpdate(
