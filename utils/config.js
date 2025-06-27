@@ -1,6 +1,5 @@
-const { JWT_SECRET = "dev-secret" } = process.env;
+require('dotenv').config();
 
-console.log(JWT_SECRET);
 module.exports = {
-  JWT_SECRET: "73g53fbfu35gn9ung54un5ub",
+  JWT_SECRET: process.env.JWT_SECRET || 'dev-secret-key',
 };

@@ -4,24 +4,22 @@ const { JWT_SECRET } = require("../utils/config");
 const User = require("../models/UserModel");
 const {
   CREATED,
-  BAD_REQUEST,
-  UNAUTHORIZED,
-  NOT_FOUND,
-  CONFLICT,
-  INTERNAL_SERVER_ERROR,
 } = require("../utils/errors");
+const NotFoundError = require("../errors/NotFoundError");
+const BadRequestError = require("../errors/BadRequestError");
+const InternalServerError = require("../errors/InternalServerError");
+const UnauthorizedError = require("../errors/UnauthorizedError");
+const ConflictError = require("../errors/ConflictError");
 
-const createUser = async (req, res) => {
+const createUser = async (req, res,next) => {
   const { name, email, password, avatar } = req.body;
 
   if (!name || !avatar || !email || !password) {
-    return res.status(BAD_REQUEST).json({
-      message: "Name, avatar, email and password are required",
-    });
+    return next(new BadRequestError('Name, avatar, email and password are required'))
   }
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    return res.status(CONFLICT).json({ message: "Email already exists" });
+    return next(new ConflictError('Email already exists'))
   }
   const hashedPassword = await bcryptjs.hash(password, 10);
   try {
@@ -42,31 +40,21 @@ const createUser = async (req, res) => {
     });
   } catch (err) {
     if (err.code === 11000) {
-      return res.status(CONFLICT).json({
-        message: "Email already in use",
-      });
+      return next(new ConflictError('Email already in use'));
     }
     if (err.name === "ValidationError") {
-      const messages = Object.values(err.errors).map((e) => e.message);
-      return res
-        .status(BAD_REQUEST)
-        .json({ message: "Input data not valid", details: messages });
+      return next(new BadRequestError('Input data not valid'))
     }
 
-    return res.status(INTERNAL_SERVER_ERROR).json({
-      message: "Failed to create user",
-      error: err.message,
-    });
+    return next(new InternalServerError('Failed to create user'))
   }
 };
 
-const login = (req, res) => {
+const login = (req, res,next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(BAD_REQUEST).json({
-      message: "Email and password are required",
-    });
+    return next(new BadRequestError('Email and password are required'))
   }
 
   return User.findUserByCredentials(email, password)
@@ -78,30 +66,26 @@ const login = (req, res) => {
       return res.send({ token });
     })
     .catch(() =>
-      res.status(UNAUTHORIZED).json({
-        message: "Invalid email or password",
-      })
+      next(new UnauthorizedError('Invalid email or password'))
     );
 };
 
-const getCurrentUser = (req, res) => {
+const getCurrentUser = (req, res,next) => {
   const userId = req.user._id;
 
   User.findById(userId)
     .then((user) => {
       if (!user) {
-        return res.status(NOT_FOUND).json({ message: "User not found" });
+        return next(new NotFoundError('User not found'))
       }
       return res.json({ data: user });
     })
     .catch((err) =>
-      res
-        .status(INTERNAL_SERVER_ERROR)
-        .json({ message: "Server error", error: err.message })
+      next(new InternalServerError(err.message))
     );
 };
 
-const updateUserProfile = (req, res) => {
+const updateUserProfile = (req, res,next) => {
   const { name, avatar } = req.body;
   const userId = req.user._id;
 
@@ -115,7 +99,7 @@ const updateUserProfile = (req, res) => {
   )
     .then((updatedUser) => {
       if (!updatedUser) {
-        return res.status(NOT_FOUND).json({ message: "User not found" });
+        return next(new NotFoundError('User not found'));
       }
 
       return res.json({
@@ -124,17 +108,9 @@ const updateUserProfile = (req, res) => {
     })
     .catch((err) => {
       if (err.name === "ValidationError") {
-        const errors = Object.values(err.errors).map((e) => e.message);
-        return res.status(BAD_REQUEST).json({
-          message: "Invalid data",
-          details: errors,
-        });
+        return next(new BadRequestError('Invalid data'))
       }
-
-      return res.status(INTERNAL_SERVER_ERROR).json({
-        message: "Failed to update user profile",
-        error: err.message,
-      });
+      return next(new InternalServerError("Failed to update user profile"))
     });
 };
 
