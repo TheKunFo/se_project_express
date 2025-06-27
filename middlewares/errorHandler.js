@@ -1,12 +1,12 @@
-const { isCelebrateError } = require('celebrate');
+const { isCelebrateError } = require("celebrate");
 const { INTERNAL_SERVER_ERROR } = require("../utils/errors");
 
-const errorHandler = (err,  res,) => {
+const errorHandler = (err, req, res, next) => {
   if (isCelebrateError(err)) {
-    const validationBody = err.details.get('body');
-    const validationParams = err.details.get('params');
+    const validationBody = err.details.get("body");
+    const validationParams = err.details.get("params");
 
-    let message = 'Validation error';
+    let message = "Validation error";
     if (validationBody) {
       message = validationBody.message;
     } else if (validationParams) {
@@ -18,7 +18,8 @@ const errorHandler = (err,  res,) => {
 
   const { statusCode = 500, message } = err;
   return res.status(statusCode).send({
-    message: statusCode === INTERNAL_SERVER_ERROR ? 'Internal Server Error' : message,
+    message:
+      statusCode === INTERNAL_SERVER_ERROR ? "Internal Server Error" : message,
   });
 };
 

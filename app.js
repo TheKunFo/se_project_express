@@ -1,6 +1,6 @@
 require("dotenv").config();
 
-const { PORT = 3001 } = process.env.PORT;
+const { PORT = 3000 } = process.env;
 const mongoose = require("mongoose");
 const express = require("express");
 const cors = require("cors");
@@ -33,7 +33,7 @@ app.use("/items", clothingItemModelRoutes);
 app.use(auth);
 
 app.use("/users", userRoutes);
-app.use((next) => {
+app.use((req, res, next) => {
   next(new NotFoundError("Requested resource not found"));
 });
 
